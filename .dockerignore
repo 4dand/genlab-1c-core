@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.eggs
+dist
+build
+.venv
+venv
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Runtime data (монтируются как volumes)
+raw_results/
+code_outputs/
+evaluations/
+reports/
+logs/
+cache/
+
+# Secrets
+.env
+
+# Docs & misc
+docs/
+*.md
+LICENSE
+tests/

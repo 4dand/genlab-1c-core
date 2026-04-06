@@ -1,0 +1,33 @@
+# =============================================================================
+# GenLab-1C-Core — Docker Compose для автономного запуска
+# =============================================================================
+#
+# Использование:
+#   docker compose run genlab run -c A -m gemini -t A1
+#   docker compose run genlab info --models
+#   docker compose run genlab evaluate experiment_B_123
+#   docker compose run genlab charts experiment_B_123
+#
+# Все результаты, отчёты и логи сохраняются в volumes на хосте.
+# API ключи загружаются из .env файла.
+# =============================================================================
+
+services:
+  genlab:
+    build: .
+    image: genlab-1c-core:latest
+    env_file:
+      - .env
+    volumes:
+      # Конфиги (read-only) — можно кастомизировать на хосте
+      - ./configs:/app/configs:ro
+      # Результаты и артефакты (read-write)
+      - ./raw_results:/app/raw_results
+      - ./code_outputs:/app/code_outputs
+      - ./evaluations:/app/evaluations
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      - ./cache:/app/cache
+    # Доступ к MCP серверу на хосте (категория B)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
