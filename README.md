@@ -11,6 +11,7 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Research Paper](https://img.shields.io/badge/Paper-НДР--2026-green.svg)](https://github.com/4dand/1c-ai-codegen-research-paper)
 [![Web Platform](https://img.shields.io/badge/Web-GenLab--1C-orange.svg)](https://github.com/4dand/genlab-1c-web)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg)](Dockerfile)
 
 </div>
 
@@ -95,6 +96,73 @@ python main.py report experiment_A_YYYYMMDD_HHMMSS
 
 # Сгенерировать графики отдельно
 python main.py charts experiment_A_YYYYMMDD_HHMMSS
+```
+
+---
+
+## Запуск в Docker (автономный режим)
+
+Ядро можно запускать как самостоятельное решение в Docker — без установки Python и зависимостей.
+
+### Сборка образа
+
+```bash
+docker build -t genlab-1c-core .
+```
+
+### Запуск через Docker Compose (рекомендуется)
+
+```bash
+# Создайте .env с API-ключом
+echo "OPENROUTER_API_KEY=sk-or-v1-ваш-ключ" > .env
+
+# Запуск эксперимента
+docker compose run genlab run -c A -m gemini -t A1
+
+# Все модели, категория A
+docker compose run genlab run -c A --all-models
+
+# Информация о моделях и балансе
+docker compose run genlab info --models
+docker compose run genlab info --balance
+
+# Экспертная оценка
+docker compose run genlab evaluate experiment_A_YYYYMMDD_HHMMSS
+
+# Генерация отчётов и графиков
+docker compose run genlab report experiment_A_YYYYMMDD_HHMMSS
+docker compose run genlab charts experiment_A_YYYYMMDD_HHMMSS
+```
+
+Все результаты, отчёты и логи сохраняются на хосте через Docker volumes — данные не пропадают при перезапуске контейнера.
+
+### Запуск без Compose
+
+```bash
+docker run --rm --env-file .env \
+  -v ./raw_results:/app/raw_results \
+  -v ./reports:/app/reports \
+  -v ./evaluations:/app/evaluations \
+  -v ./code_outputs:/app/code_outputs \
+  -v ./logs:/app/logs \
+  genlab-1c-core run -c A -m gemini -t A1
+```
+
+### Категория B (MCP) в Docker
+
+Для задач категории B MCP-сервер должен быть доступен из контейнера. Замените `localhost` на `host.docker.internal` в `configs/settings.yaml`:
+
+```yaml
+mcp:
+  url: "http://host.docker.internal:8000"
+```
+
+```bash
+# Запустить MCP-сервер на хосте
+docker run -d -p 8000:8000 vladimirkharin/1c_mcp
+
+# Запустить бенчмарк из контейнера
+docker compose run genlab run -c B -m claude --no-mock
 ```
 
 ---
@@ -293,6 +361,8 @@ genlab-1c-core/
 │   └── evaluator.md            # Документация модуля оценки
 │
 ├── main.py                     # CLI точка входа
+├── Dockerfile                  # Docker-образ для автономного запуска
+├── docker-compose.yml          # Docker Compose с volumes
 ├── requirements.txt
 └── .env.example
 ```
@@ -413,6 +483,30 @@ python main.py run -c A -m gemini -t A1
 | Исходный код ядра (этот репозиторий) | [4dand/genlab-1c-core](https://github.com/4dand/genlab-1c-core) |
 | Веб-платформа для коллективной экспертной оценки | [4dand/genlab-1c-web](https://github.com/4dand/genlab-1c-web) |
 | MCP-сервер для доступа к метаданным 1С:Предприятие | [vladimir-kharin/1c_mcp](https://github.com/vladimir-kharin/1c_mcp) |
+
+---
+
+## English Summary
+
+**Benchmarking LLM Code Generation for 1C:Enterprise 8 (BSL Language)**
+
+GenLab-1C Core is an open-source benchmarking framework for evaluating large language models on code generation tasks targeting the **1C:Enterprise platform** — a domain-specific ERP system widely used in Russia and CIS countries with its own programming language (BSL / Built-in Scripting Language).
+
+**Key features:**
+- Structured benchmark pipeline: prompt → LLM generation → expert evaluation → statistical analysis → publication-ready reports
+- **SMOP evaluation methodology** — 4-criteria scoring system (Syntax, Meaning, Optimization, Platform) designed for domain-specific languages tied to configuration metadata
+- Two task categories: algorithmic (Category A) and platform-specific with MCP metadata context (Category B)
+- Models tested: Claude Opus 4.5, GPT-5.2 Codex, Gemini 3 Flash (via OpenRouter)
+- Docker-ready for standalone deployment
+- TUI interface for expert scoring, LaTeX/HTML/JSON report generation, publication-quality charts
+
+**Key findings** (from the [research paper](https://github.com/4dand/1c-ai-codegen-research-paper)):
+- Category A (algorithmic tasks): mean Q = 8.8/10 — all models perform well
+- Category B (platform-specific tasks with MCP context): mean Q = 6.8/10 — significant quality drop
+- Claude Opus 4.5 achieves the best consistency (Q = 8.4 in Category B, σ = 0.89)
+- Providing metadata context via MCP does not fully close the quality gap
+
+> **GitHub Topics (recommended for this repo):** `benchmark`, `llm`, `code-generation`, `1c-enterprise`, `bsl`, `ai`, `smop`, `mcp`, `model-context-protocol`, `openrouter`, `claude`, `gpt`, `gemini`, `research`, `docker`, `domain-specific-language`
 
 ---
 
